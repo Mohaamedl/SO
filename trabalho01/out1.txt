@@ -1,0 +1,4 @@
+82892 test_a1
+48560 test_a1/aaa
+11336 test_a1/aaa/zzzz
+13640 test_a1/rrr

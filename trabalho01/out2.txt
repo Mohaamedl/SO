@@ -1,0 +1,7 @@
+SIZE   NAME 1699401600     -a  sop
+24576	sop
+16384	sop/praticas
+4096	sop/praticas/aula1
+8192	sop/praticas/aula2
+4096	sop/praticas/aula2/sh
+4096	sop/teoricas
