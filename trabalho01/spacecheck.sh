@@ -38,7 +38,7 @@ spaceCheck() {
 
     # começa-se a construir o comando find para buscar por diretorias e/ou ficheiros,
     # basta alterar o type para f ou adicionar -o -type f se quiser os dois
-    local cmd="find '$dir' -type d"
+    local cmd="find '$dir' -type f"
 
     # começa-se por adicionar ao comando filtro pelo nome, data de maxima modificação e tamanho
     [ -n "$name" ] && cmd="$cmd -name '$name'"
@@ -46,20 +46,21 @@ spaceCheck() {
     [ -n "$size" ] && cmd="$cmd -size +${size}c"
 
     # adiciona-se o comando du para exibir os tamanhos das diretorias/ficheiros pos filtros
-    cmd="$cmd -exec du -b {} +"
+    cmd="$cmd -exec du -sb {} + "
 
     # ordena-se os resultados
     [ "$alpha" = "true" ] && cmd="$cmd | sort -k 2" 
     [ "$reverse" = "true" ] && cmd="$cmd |sort -k 2 | sort -r"
-
+    
     # um contador de linhas
     local lineCount=0
-
     # Executar o comando
-    eval "$cmd" | while IFS= read -r line; do # executa-se oo comando montado e redeciona-se a saida para while para ler linha a linha
+    eval "$cmd" | while IFS= read -r line; do # executa-se o comando montado e redeciona-se a saida para while para ler linha a linha
         ((lineCount++))
+        
         echo "$line"
-        [ -n "$limit" ] && [ $lineCount -ge $limit ] && break # se na var limit estiver um valor e este for maior que line_count então o ciclo termina
+
+        [ -n "$limit" ] && [ $lineCount -ge $limit ] && break # se na var limit estiver um valor e este for <= que line_count então o ciclo termina
     done
 }
 

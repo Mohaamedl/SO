@@ -1,0 +1,4 @@
+SIZE   NAME 1699660800 -n *.c    -a  test
+245	test/aulasPraticas/aula2/c.c
+11	test/aulasPraticas/aula2/g.c
+396	test/aulasPraticas/aula3/b.c
