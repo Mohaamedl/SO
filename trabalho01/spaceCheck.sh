@@ -1,6 +1,6 @@
 #!/bin/bash
-
-# Função para mostrar as opções ao usuário
+#----------------------------- funçoes --------------------------------------
+# funçao para mostrar as opçoes
 showHelp() {
   echo "Uso: $0 [OPÇÕES] DIRETÓRIOS..."
   echo "OPÇÕES:"
@@ -13,55 +13,53 @@ showHelp() {
   exit 1
 }
 
-# Função principal para filtrar, ordenar e mostrar o espaço nas diretórias dadas
+# funçao principal para filtrar por cada diretoria
 spaceCheck() {
-  local dir="$1"
-  local name="$2"
-  local datetime="$3"
-  local size="$4"
-  local reverse="$5"
-  local alpha="$6"
+    local dir="$1"
+    local name="$2"
+    local datetime="$3"
+    local size="$4"
+    # convertemos data para segundos
+    [ -n "$datetime" ] && timestamp=$(date -d "$datetime" +%s)
 
-  # Converter a data em segundos para poder filtrar
-  [ -n "$datetime" ] && timestamp=$(date -d "$datetime" +%s)
+    # começamos por contruir o comando com find
+    local cmd="find '$dir' -type f"
 
-  # Construir o comando find para buscar por arquivos
-  local cmd="find '$dir' -type f"
+    # filtramos por nome, tamanho e data de modificaçao/criaçao
+    [ -n "$name" ] && cmd="$cmd -name '$name'"
+    [ -n "$timestamp" ] && cmd="$cmd -newermt '$datetime'"
+    [ -n "$size" ] && cmd="$cmd -size +${size}b"
 
-  # Adicionar ao comando filtro por nome, data de modificação máxima e tamanho
-  [ -n "$name" ] && cmd="$cmd -name '$name'"
-  [ -n "$timestamp" ] && cmd="$cmd -newermt '$datetime'"
-  [ -n "$size" ] && cmd="$cmd -size +${size}c"
-
-  # Adicionar o comando du para exibir os tamanhos dos arquivos após os filtros
-  cmd="$cmd -exec du -bs {} +"
-  
-
-  # Executar o comando e processar a saída
-  eval "$cmd" | awk -v name="$name" '
-    BEGIN {
-      FS = "\t";
-    }
-    {
-      fileDir = $2;
-      sub(/\/[^/]+$/, "", fileDir);  # Obter o diretório pai removendo o nome do arquivo
-
-      # Inicializar os totais para cada diretório
-      if (!(fileDir in dirTotals)) {
-        dirTotals[fileDir] = 0;
+    # usamos du para mostrar os tamanhos em bytes
+    cmd="$cmd -exec du -bs {} +"
+    
+    # executamos o comando e tratamos a saida
+    eval "$cmd" | awk -v name="$name" '
+      BEGIN {
+        FS = "\t";
       }
-
-      dirTotals[fileDir] += $1;
-    }
-    END {
-      # Imprimir os totais por diretório
-      for (dir in dirTotals) {
-        printf "%-10s%s\n", dirTotals[dir], dir;
+      {
+        fileDir = $2;
+        sub(/\/[^/]+$/, "", fileDir);  # obtemos a diretoria
+        
+        if (!(fileDir in dirTotals)) { # iniciamos um total vazio por cada diretoria diferente
+          dirTotals[fileDir] = 0;
+        }
+        dirTotals[fileDir] += $1;
       }
-    }' # ordenar caso tenha sido pedido
+      END {
+        # imorimimos o total de cada diretoria, com espaçamento fixo
+        for (dir in dirTotals) {
+          printf "%-10s%s\n", dirTotals[dir], dir;
+        }
+      }'
 }
 
-# Guardar as opções em variáveis
+
+#-------------------------- main-------------------------------
+
+
+# começamos por guardar as opçoes em variaveis
 while getopts "n:d:s:ral:" opt; do
   case $opt in
     n) name="$OPTARG" n="-n $OPTARG" ;;
@@ -72,25 +70,25 @@ while getopts "n:d:s:ral:" opt; do
     l) limit="$OPTARG" l="-l $OPTARG" ;;
   esac
 done
-sorting="sort -k1,1nr" # ordena por tamanho por padrao
+sorting="sort -k1,1nr" # varivel para ordenar por tamanho (por padrao)
   
-  # ordena pelas opçoes
-[ "$alpha" = "true" ] && sorting="sort -k 2"
-[ "$reverse" = "true" ] && sorting="sort -r"
+# ordena pelas opçoes
+[ "$alpha" = "true" ] && sorting="sort -k2,2"
+[ "$reverse" = "true" ] && sorting="sort -k2,2r"
 
-# Remover as opções da lista de comandos
+# removemos as opçoes
 shift $((OPTIND - 1))
 
-# Verificar se foi fornecida alguma diretoria
+# verificamos se foi dado algum argumento, no caso, diretoria
 if [ $# -eq 0 ]; then
   showHelp
   exit 1
 fi
 
-# Printar o título
+# mostra-se o titulo
 echo "SIZE      NAME" "$(date -d "$datetime" +%s)" "$n" "$d" "$s" "$r" "$a" "$l" "$@"
 
-# por fim basta executar a funçao por cada diretoria dada
+# por fim basta executar a funçao por cada diretoria dada, e ao resultado limitar as linhas e ordenar se for pedido
 for dir in "$@"; do
-  spaceCheck "$dir" "$name" "$datetime" "$size" "$reverse" "$alpha"
+  spaceCheck "$dir" "$name" "$datetime" "$size" 
 done | (if [ -n "$limit" ]; then head -n "$limit"; else cat; fi) | $sorting 
