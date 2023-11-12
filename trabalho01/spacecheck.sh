@@ -1,7 +1,10 @@
-#!/bin/bash
+#!/bin/bash 
 
-# funçao para mostrar as opções ao utilizador
-showHelp() { 
+ 
+
+# Função para exibir a ajuda 
+
+show_help() { 
 
   echo "Uso: $0 [OPÇÕES] DIRETÓRIOS..." 
 
@@ -23,79 +26,84 @@ showHelp() {
 
 } 
 
-# função principal para filtrar, ordenar e mostrar o espaço nas na diretoria dada
-spaceCheck() {
-    local dir="$1"
-    local name="$2"
-    local datetime="$3"
-    local size="$4"
-    local reverse="$5"
-    local alpha="$6"
-    local limit="$7"
+ 
 
-    # converte-se o tempo em segundo para se poder filtrar
-    [ -n "$datetime" ] && timestamp=$(date -d "$datetime" +%s)
+# Inicialize as variáveis 
 
-    # começa-se a construir o comando find para buscar por diretorias e/ou ficheiros,
-    # basta alterar o type para f ou adicionar -o -type f se quiser os dois
-    local cmd="find '$dir' -type f"
+NAME_PATTERN=".*" 
 
-    # começa-se por adicionar ao comando filtro pelo nome, data de maxima modificação e tamanho
-    [ -n "$name" ] && cmd="$cmd -name '$name'"
-    [ -n "$timestamp" ] && cmd="$cmd -newermt '$datetime'"
-    [ -n "$size" ] && cmd="$cmd -size +${size}c"
+DATE="" 
 
-    # adiciona-se o comando du para exibir os tamanhos das diretorias/ficheiros pos filtros
-    cmd="$cmd -exec du -sb {} + "
+SIZE="" 
 
-    # ordena-se os resultados
-    [ "$alpha" = "true" ] && cmd="$cmd | sort -k 2" 
-    [ "$reverse" = "true" ] && cmd="$cmd |sort -k 2 | sort -r"
-    
-    # um contador de linhas
-    local lineCount=0
-    # Executar o comando
-    eval "$cmd" | while IFS= read -r line; do # executa-se o comando montado e redeciona-se a saida para while para ler linha a linha
-        ((lineCount++))
-        
-        echo "$line"
+REVERSE=false 
 
-        [ -n "$limit" ] && [ $lineCount -ge $limit ] && break # se na var limit estiver um valor e este for <= que line_count então o ciclo termina
-    done
-}
+ALPHABETICAL=false 
 
-# guarda-se as opções em variaveis 
-while getopts "n:t:s:ral:" opt; do
-    case $opt in
-        n) name="$OPTARG" n="-n $OPTARG" ;;
+LIMIT="" 
 
-        t) datetime="$OPTARG" d="-d $OPTARG" ;;
+ 
 
-        s) size="$OPTARG" s="-s $OPTARG" ;;
+# Processa as opções 
 
-        r) reverse="true" r="-r";;
+while getopts "n:d:s:rahl:" opt; do 
 
-        a) alpha="true" a="-a";;
+  case $opt in 
 
-        l) limit="$OPTARG" l="-l $OPTARG";;
-    esac
+    n) NAME_PATTERN="$OPTARG" ;; 
 
-done
+    d) DATE="$OPTARG" ;; 
 
-# remove-se as opções da lista de comandos
-shift $((OPTIND - 1))
+    s) SIZE="$OPTARG" ;; 
 
-# verificar se foi dado alguma diretoria
-if [ $# -eq 0 ]; then
-    showHelp
-    exit 1
-fi
+    r) REVERSE=true ;; 
 
-# printar o titulo
-echo "SIZE   NAME" "$(date -d "$datetime" +%s)" "$n" "$d" "$s" "$r" "$a" "$l" "$@"
+    a) ALPHABETICAL=true ;; 
+
+    l) LIMIT="$OPTARG" ;; 
+
+    h) show_help ;; 
+
+    \?) show_help ;; 
+
+  esac 
+
+done 
 
 
-# executa-se a função para cada diretoria dada
-for dir in "$@"; do
-    spaceCheck  $pwd$dir "$name" "$datetime" "$size" "$reverse" "$alpha" "$limit"
-done
+ 
+
+shift $((OPTIND-1)) 
+
+# Se nenhum diretório for especificado, exiba a ajuda 
+
+if [ $# -eq 0 ]; then 
+
+  show_help 
+
+fi 
+
+
+ 
+
+# Cabeçalho da tabela 
+
+echo "SIZE NAME" 
+
+ 
+
+# Loop pelos diretórios 
+
+for dir in "$@"; do 
+
+  if [ -d "$dir" ]; then 
+
+    find "$dir" -type f -name "$NAME_PATTERN" -newermt "$DATE" -size +"$SIZE"c -exec du -ch {} + | grep -E '\d+M|\d+G' | sort -k1,1n | tail -n "$LIMIT" 
+
+  else 
+
+    echo "NA $dir (Diretório inacessível)" 
+
+  fi 
+
+done 
