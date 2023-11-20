@@ -7,7 +7,7 @@ int main( int argc, char *argv[] )
     char s[30];
     argv[2] = "dsd";
     int i;
-    
+    char 
     printf("args adress:%p \n ",(void*)&argv);
     printf("ddd: %s \n", argv[2]);
     for(i = 0 ; i < argc ; i++)
