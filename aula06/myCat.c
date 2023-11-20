@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-/* SUGESTÂO: utilize as páginas do manual para conhecer mais sobre as funções usadas: rge gre ger ger ger ger ge gtgfdg ergfd erdfger dfgerdfgdfgerg ferd gerdg rdfg verdfgevrdfg vfh etfdg erdg erfgerfgde rgfdergerg erg er ger g erg
+/* SUGESTÂO: utilize as páginas do manual para conhecer mais sobre as funções usadas:
  man fopen
  man fgets
 */
