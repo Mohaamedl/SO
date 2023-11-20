@@ -4,10 +4,11 @@
 int main( int argc, char *argv[] )
 {
     if (argc==3){
-    char s[30];
-    argv[2] = "dsd";
+    char *s;
+    char *r;
+    
     int i;
-    char 
+     
     printf("args adress:%p \n ",(void*)&argv);
     printf("ddd: %s \n", argv[2]);
     for(i = 0 ; i < argc ; i++)
@@ -15,7 +16,8 @@ int main( int argc, char *argv[] )
         printf("Argumento numero: %02d: \"%s\"\n", i, argv[i]);
        
     }
-    print(strtod( argv[1]) + strtod(argv[0]));
+    
+    printf("%d \n",(int) (strtod( argv[1],&s) + strtod(argv[2],&r)));
 
     return EXIT_SUCCESS;
     }
