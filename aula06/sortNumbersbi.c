@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
     FILE *fp = NULL;
     char line[LINEMAXSIZE];
     fp = fopen(argv[1],"r");
+    
 
     if(fp == NULL) 
     {
