@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
         printf("Can't read the file %s\n", argv[1]);
         return EXIT_FAILURE;
     }
+    //
 
     while(fgets(line, sizeof(line),fp) != NULL)
     {
