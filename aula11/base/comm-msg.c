@@ -128,7 +128,7 @@ void cliCloseComm(void)
 void cliSend(MESSAGE *msg)
 {
     /* copy message into container */
-    container.client = 1L;
+    container.client = (long) getpid();
     container.msg = *msg;
 
     /* send message */
@@ -143,7 +143,7 @@ void cliSend(MESSAGE *msg)
 void cliReceive(MESSAGE *msg)
 {
     /* get response message */
-    if (msg_receive(scQueue, &container, sizeof(MESSAGE), 0L) == -1) { 
+    if (msg_receive(scQueue, &container, sizeof(MESSAGE),(long) getpid()) == -1) { 
         perror("Fail receiving message from server-client message queue");
         exit(EXIT_FAILURE);
     }
