@@ -43,7 +43,7 @@ spaceCheck() {
         sub(/\/[^/]+$/, "", fileDir);  # obtemos a diretoria
         
         if (!(fileDir in dirTotals)) { # iniciamos um total vazio por cada diretoria diferente
-          dirTotals[fileDir] = 0;
+          dirTotals[fileDir] = $1; # possivel erro 0-->$1
         }
         dirTotals[fileDir] += $1;
       }
@@ -73,8 +73,8 @@ done
 sorting="sort -k1,1nr" # varivel para ordenar por tamanho (por padrao)
   
 # ordena pelas opçoes
-[ "$alpha" = "true" ] && sorting="sort -k2,2"
-[ "$reverse" = "true" ] && sorting="sort -k2,2r"
+[ "$alpha" == "true" ] && sorting="sort -k2,2"
+[ "$reverse" == "true" ] && sorting="sort -k2,2r"
 
 # removemos as opçoes
 shift $((OPTIND - 1))

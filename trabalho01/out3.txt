@@ -1,6 +1,7 @@
-SIZE   NAME 1699401600     -a  sop
-20480	sop
-12288	sop/praticas
-4096	sop/praticas/aula1
-4096	sop/praticas/aula2
-4096	sop/teoricas
+SIZE NAME
+0 NAME
+0 test_a1
+0 test_a1/aaa
+0 test_a1/aaa/zzzz
+0 test_a1/newsss NEW
+0 test_a1/rrr

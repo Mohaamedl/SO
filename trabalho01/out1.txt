@@ -1,4 +1,5 @@
-82892 test_a1
-48560 test_a1/aaa
-11336 test_a1/aaa/zzzz
-13640 test_a1/rrr
+SIZE      NAME 1703808000       test_a1
+33128     test_a1/aaa
+16596     test_a1
+9544      test_a1/rrr
+7240      test_a1/aaa/zzzz

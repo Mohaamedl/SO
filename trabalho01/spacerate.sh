@@ -1,153 +1,85 @@
-#!/bin/bash 
-
-
-
-# Função para comparar o uso do espaço entre dois arquivos spacecheck.sh 
-compare_space() { 
-
-    local file1="$1" 
-
-    local file2="$2" 
-
-    local reverse="$3" 
-
-    local alpha="$4" 
-
-
-
-    # Extrair os dados relevantes dos arquivos spacecheck.sh 
-
-    local data1=($(awk '{print $1}' "$file1")) 
-
-    local data2=($(awk '{print $1}' "$file2")) 
-
-    local paths1=($(awk '{print $2}' "$file1")) 
-
-    local paths2=($(awk '{print $2}' "$file2")) 
-
-
-
-    # Criar uma lista única de todos os caminhos 
-
-    local all_paths=($(echo "${paths1[@]}" "${paths2[@]}" | tr ' ' '\n' | sort -u)) 
-
-
-
-    # Loop através dos caminhos e comparar o uso do espaço 
-
-    for path in "${all_paths[@]}"; do
-        local idx1=-1 
-
-        local idx2=-1 
-
-
-
-        # Encontrar os índices correspondentes para o caminho nos arquivos 
-
-        for i in "${!paths1[@]}"; do 
-
-            if [ "${paths1[i]}" == "$path" ]; then 
-
-                idx1=$i 
-
-                break 
-
-            fi 
-
-        done 
-
-
-
-        for i in "${!paths2[@]}"; do 
-
-            if [ "${paths2[i]}" == "$path" ]; then 
-
-                idx2=$i 
-
-                break 
-
-            fi 
-
-        done 
-
-
-
-        # Calcular a diferença no uso do espaço 
-
-        local diff=0 
-
-        if [ "$idx1" -ne -1 ] && [ "$idx2" -ne -1 ]; then 
-
-            # Extrair apenas o valor numérico e remover unidades como "K", "M", etc. 
-
-            size1=$(echo "${data1[idx1]}" | tr -d 'A-Za-z') 
-
-            size2=$(echo "${data2[idx2]}" | tr -d 'A-Za-z') 
-
-            # Calcular a diferença 
-
-            diff=$((size2 - size1)) 
-
-        elif [ "$idx1" -ne -1 ]; then 
-
-            size1=$(echo "${data1[idx1]}" | tr -d 'A-Za-z') 
-
-            diff=$((0 - size1)) 
-
-        elif [ "$idx2" -ne -1 ]; then
-            size2=$(echo "${data2[idx2]}" | tr -d 'A-Za-z') 
-
-            diff=$((size2 - 0)) 
-
-        fi 
-
-
-
-        # Exibir a diferença no uso do espaço, marcando como "NEW" ou "REMOVED" 
-
-        if [ "$diff" -lt 0 ]; then 
-
-            echo "$diff $path REMOVED" 
-
-        elif [ "$diff" -gt 0 ]; then 
-
-            echo "$diff $path NEW" 
-
-        fi 
-
-    done 
-
-} 
-
-
-
-# Analisar opções de linha de comando
-while getopts "ra" opt; do 
-
-    case $opt in 
-
-        r) reverse="true" ;; 
-
-        a) alpha="true" ;; 
-
-    esac 
-
-done 
-
-
-
-# Remover as opções da lista de argumentos
-shift $((OPTIND - 1)) 
-
-
-
-# Verificar se foram fornecidos dois argumentos (arquivos de resultados do spacecheck.sh)
-if [ $# -ne 2 ]; then 
-
-    echo "Por favor, forneça dois arquivos spacecheck.sh para comparação." 
-
-    exit 1 
-
+#!/bin/bash
+
+# verifica se foram dados dois argumentos
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+    echo "É necessário fornecer dois ou três argumentos"
+    exit 1
 fi
-#Chamar a função para comparar os arquivos
-compare_space "$1" "$2" "$reverse" "$alpha"
+
+option=$1
+file1=$2
+file2=$3
+
+if [ $# -eq 2 ]; then
+    file1=$1
+    file2=$2
+fi
+
+# retira o tamanho e o diretório correspondente em cada linha
+# declara o valor size à chave diretório no array size_file1 e guarda na variável file1
+declare -A sizesFile1
+output=""
+while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^SIZE\ NAME.* ]] || [[ -z "$line" ]]; then
+        continue
+    fi
+    dir=$(echo "$line" | awk '{print $2}')
+    size=$(echo "$line" | awk '{print $1}')
+    sizesFile1["$dir"]=$size
+done < "$file1"
+
+# repetição para file2
+declare -A sizesFile2
+while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^SIZE\ NAME.* ]] || [[ -z "$line" ]]; then
+        continue
+    fi
+    dir=$(echo "$line" | awk '{print $2}')
+    size=$(echo "$line" | awk '{print $1}')
+    sizesFile2["$dir"]=$size
+done < "$file2"
+
+# caso não exista diretório no file 1 , será mostrado novo diretório NEW e o seu tamanho
+for dir in "${!sizesFile2[@]}"; do
+    if [[ ! ${sizesFile1[$dir]} ]]; then
+        output+="${sizesFile2[$dir]} $dir NEW"
+        unset sizesFile2["$dir"]
+        if [[ ${#sizesFile2[@]} -gt 0 ]]; then
+            output+="\n"
+        fi
+    fi
+done
+
+# caso não exista diretório no file 2 , será mostrado antigo diretório REMOVED e o tamanho apagado
+for dir in "${!sizesFile1[@]}"; do
+    if [[ ! ${sizesFile2[$dir]} ]]; then
+        output+="-${sizesFile1[$dir]} $dir REMOVED"
+        unset sizesFile1["$dir"]
+        if [[ ${#sizesFile1[@]} -gt 0 ]]; then
+            output+="\n"
+        fi
+    fi
+done
+
+# caso exista o diretório em ambos os ficheiros calcula diferença dos tamanhos 
+for dir in "${!sizesFile1[@]}"; do
+    if [[ ${sizesFile2[$dir]} ]]; then
+        diff=$((sizesFile2[$dir] - sizesFile1[$dir]))
+        output+="$diff $dir"
+        unset sizesFile1["$dir"]
+        unset sizesFile2["$dir"]
+        if [[ ${#sizesFile1[@]} -gt 0 ]]; then
+            output+="\n"
+        fi
+    fi
+done
+
+# ordena a saída conforme a opção fornecida
+echo "SIZE NAME"
+if [ "$option" == "-r" ]; then
+    echo -e "$output" | sort -k1,1n
+elif [ "$option" == "-a" ]; then
+    echo -e "$output" | sort -k2,2
+else
+    echo -e "$output" | sort -k1,1nr
+fi
