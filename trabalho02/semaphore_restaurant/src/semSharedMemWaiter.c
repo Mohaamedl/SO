@@ -259,8 +259,7 @@ static void takeFoodToTable (int n)
     saveState(nFic, &sh->fSt);
     
     // avisa que chegou a comida up do foodArrived
-    if (semUp (semgid, sh->foodArrived [sh->fSt.assignedTable[n]]) == -1)
-    {
+    if (semUp (semgid, sh->foodArrived [sh->fSt.assignedTable[n]]) == -1){
         perror ("error on the up operation for semaphore access (WT)");
         exit (EXIT_FAILURE);
     }
